@@ -1,21 +1,21 @@
 const ICommand = require('./commandPlugins/ICommand')
 const path = require('path')
 
-const tts = require('./tts')
+// const tts = require('./tts')
 
-class CommandManager{
+class CommandManager {
     pluginMap = new Map()
 
-    constructor(){
+    constructor() {
 
     }
 
-    addPluginHandle(commandWord, plugin){
-        if(!plugin.prototype instanceof ICommand){
+    addPluginHandle(commandWord, plugin) {
+        if (!plugin.prototype instanceof ICommand) {
             throw new Error('Command plugin must extend ICommand')
         }
-        
-        if(this.pluginMap.has(commandWord)){
+
+        if (this.pluginMap.has(commandWord)) {
             throw new Error(`Command ${commandWord} is already registered`)
         }
 
@@ -23,10 +23,10 @@ class CommandManager{
     }
 
     // Let all the plugins know a wakeword was detected
-    wakeWordDetected(options){
+    wakeWordDetected(options) {
         let returnValue = true
-        for(let [key, value] of this.pluginMap){
-            if(!value.wakeWordDetected(options)){
+        for (let [key, value] of this.pluginMap) {
+            if (!value.wakeWordDetected(options)) {
                 returnValue = false
             }
         }
@@ -34,19 +34,19 @@ class CommandManager{
         return returnValue
     }
 
-    processCommand(options){
+    processCommand(options) {
         const command = options.command.toLowerCase()
         const commandArray = command.split(' ')
         const commandWord = commandArray.splice(0, 1)[0]
         const commandText = commandArray.join(' ')
 
-        if(!this.pluginMap.has(commandWord)){
-            if(options.player){
-                tts.speak('Command not recognized')
-                .then(audioStream => {
-                    options.player.playStream(audioStream)
-                })
-            }else{
+        if (!this.pluginMap.has(commandWord)) {
+            if (options.player) {
+                // tts.speak('Command not recognized')
+                // .then(audioStream => {
+                //     options.player.playStream(audioStream)
+                // })
+            } else {
                 options.messageChannel.send('Command not recognized')
             }
 
@@ -60,8 +60,8 @@ class CommandManager{
         })
     }
 
-    close(options){
-        for(let [key, value] of this.pluginMap){
+    close(options) {
+        for (let [key, value] of this.pluginMap) {
             value.close(options)
         }
     }

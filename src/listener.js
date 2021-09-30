@@ -9,13 +9,22 @@ const { FileWriter } = require('wav')
 const { OpusEncoder } = require('@discordjs/opus')
 
 const Porcupine = require('@picovoice/porcupine-node')
-const {
-    JARVIS
-} = require('@picovoice/porcupine-node/builtin_keywords')
+
 const speech = require('@google-cloud/speech')
-const {spawn} = require('child_process')
+const { spawn } = require('child_process')
 
 const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1-generated')
+
+const { resolve } = require('path')
+
+// const {
+//     JARVIS
+// } = require('@picovoice/porcupine-node/builtin_keywords')
+
+// const KEKERES = resolve('./words/kekeres.ppn')
+const HEYHEYHEY = resolve('./words/heyheyhey.ppn')
+// const PROCUPINE = resolve('./words/porcupine_es.pv')
+// const RHINO = resolve('./words/rhino_es.pv')
 
 class OpusDecodingStream extends Transform {
     encoder
@@ -44,7 +53,7 @@ class Listener extends EventEmitter {
     }
 
     // Perform text-to-speech on audio until silence
-    listenForCommand(userId){
+    listenForCommand(userId) {
         const commandFilePath = `./recordings/${userId}.wav`
 
         console.log(`Listening for command from: ${userId}`)
@@ -57,22 +66,22 @@ class Listener extends EventEmitter {
                 duration: 2000
             }
         })
-        .pipe(new OpusDecodingStream({}, encoder))
-        .pipe(new FileWriter(commandFilePath, {
-            channels: 1,
-            sampleRate: 16000
-        }))
+            .pipe(new OpusDecodingStream({}, encoder))
+            .pipe(new FileWriter(commandFilePath, {
+                channels: 1,
+                sampleRate: 16000
+            }))
         commandAudioStream.on('end', () => {
             // Convert speech file to text
             const thisRef = this
             this.getSpeechToText(commandFilePath)
-            .then((commandText) => {
-                console.log(`New command text: ${commandText}`)
-                thisRef.emit('command', userId, commandText.toString())
-            })
-            .catch(err => {
-                console.error(err)
-            })
+                .then((commandText) => {
+                    console.log(`New command text: ${commandText}`)
+                    thisRef.emit('command', userId, commandText.toString())
+                })
+                .catch(err => {
+                    console.error(err)
+                })
 
             this.voiceConnection.receiver.subscriptions.delete(userId)
             this.subscribeToUser(userId)
@@ -80,8 +89,8 @@ class Listener extends EventEmitter {
     }
 
     // Break up an array into chunks of a specified size
-    chunkArray(array, size){
-        return Array.from({length: Math.ceil(array.length / size)}, (v, index) => {
+    chunkArray(array, size) {
+        return Array.from({ length: Math.ceil(array.length / size) }, (v, index) => {
             return array.slice(index * size, index * size + size)
         })
     }
@@ -96,7 +105,7 @@ class Listener extends EventEmitter {
 
         this.userFrameAccumulators[userId] = []
 
-        const handle = new Porcupine([JARVIS], [parseFloat(process.env.WAKE_WORD_SENSITIVITY)])
+        const handle = new Porcupine([HEYHEYHEY], [parseFloat(process.env.WAKE_WORD_SENSITIVITY)])//, PROCUPINE, RHINO)
         const audioReceiveStream = this.voiceConnection.receiver.subscribe(userId)
             .pipe(new prism.opus.Decoder({
                 rate: handle.sampleRate,
@@ -108,20 +117,20 @@ class Listener extends EventEmitter {
             while (null !== (data = audioReceiveStream.read())) {
                 // Get the frames
                 let newFrames16 = new Array(data.length / 2)
-                for(let i = 0; i < data.length; i += 2){
-                    newFrames16[i/2] = data.readInt16LE(i)
+                for (let i = 0; i < data.length; i += 2) {
+                    newFrames16[i / 2] = data.readInt16LE(i)
                 }
                 this.userFrameAccumulators[userId] = this.userFrameAccumulators[userId].concat(newFrames16)
                 let frames = this.chunkArray(this.userFrameAccumulators[userId], handle.frameLength)
 
-                if(frames[frames.length - 1].length !== handle.frameLength){
+                if (frames[frames.length - 1].length !== handle.frameLength) {
                     this.userFrameAccumulators[userId] = frames.pop()
-                }else{
+                } else {
                     this.userFrameAccumulators[userId] = []
                 }
 
                 // Loop through all the frames for the keyword
-                for(let frame of frames){
+                for (let frame of frames) {
                     const index = handle.process(frame)
                     if (index != -1) {
                         console.log("Keyword Found!")
@@ -143,7 +152,7 @@ class Listener extends EventEmitter {
     // Stop listening to a user
     unsubscribeFromUser(userId) {
         console.log(`Unsubscribing from: ${userId}`)
-        if(!(userId in this.userSubscriptions)){
+        if (!(userId in this.userSubscriptions)) {
             // User not subscribed to
             return
         }
@@ -161,14 +170,14 @@ class Listener extends EventEmitter {
     close() {
         console.log('Closing listener')
         // Close all the streams
-        for(const [key, value] of Object.entries(this.userSubscriptions)){
+        for (const [key, value] of Object.entries(this.userSubscriptions)) {
             this.unsubscribeFromUser(key)
         }
         this.userSubscriptions = {}
     }
 
     // Use DeepSpeech speech to text
-    speechToTextLocal(commandFilePath){
+    speechToTextLocal(commandFilePath) {
         return new Promise(async (resolve, reject) => {
             const deepspeech = spawn('deepspeech', [
                 '--model',
@@ -184,7 +193,7 @@ class Listener extends EventEmitter {
     }
 
     // Use Google speech to text
-    speechToTextGoogle(commandFilePath){
+    speechToTextGoogle(commandFilePath) {
         return new Promise(async (resolve, reject) => {
             const client = new speech.SpeechClient()
 
@@ -203,18 +212,18 @@ class Listener extends EventEmitter {
 
             const [response] = await client.recognize(request)
             const transcription = response.results
-            .map(result => result.alternatives[0].transcript)
-            .join('\n')
+                .map(result => result.alternatives[0].transcript)
+                .join('\n')
 
             resolve(transcription)
         })
     }
 
     // Use IBM Watson Speech-to-Text
-    speechToTextIBMWatson(commandFilePath){
+    speechToTextIBMWatson(commandFilePath) {
         return new Promise(async (resolve, reject) => {
             // Check for the service URL
-            if(!process.env.IBM_WATSON_SERVICE_URL){
+            if (!process.env.IBM_WATSON_SERVICE_URL) {
                 reject('IBM Watson requires a IBM_WATSON_SERVICE_URL in the .env file')
             }
 
@@ -229,36 +238,36 @@ class Listener extends EventEmitter {
             }
 
             speechToText.recognize(params)
-            .then(speechRecognitionResults => {
-                const transcripttion = speechRecognitionResults.result.results
-                .map(result => result.alternatives[0].transcript
-                    .split(' ').filter(word => word != '%HESITATION').join(' ')    // Filter out %HESITATION
-                )
-                .join(' ')
-                
-                resolve(transcripttion)
-            })
-            .catch(err => {
-                reject(err)
-            })
+                .then(speechRecognitionResults => {
+                    const transcripttion = speechRecognitionResults.result.results
+                        .map(result => result.alternatives[0].transcript
+                            .split(' ').filter(word => word != '%HESITATION').join(' ')    // Filter out %HESITATION
+                        )
+                        .join(' ')
+
+                    resolve(transcripttion)
+                })
+                .catch(err => {
+                    reject(err)
+                })
         })
     }
 
     // Helper function to get the text from the command file
-    getSpeechToText(commandFilePath){
-        switch(process.env.SPEECH_TO_TEXT_METHOD){
+    getSpeechToText(commandFilePath) {
+        switch (process.env.SPEECH_TO_TEXT_METHOD) {
             case 'LOCAL':
                 return this.speechToTextLocal(commandFilePath)
-            break;
+                break;
             case 'GOOGLE':
                 return this.speechToTextGoogle(commandFilePath)
-            break;
+                break;
             case 'IBM_WATSON':
                 return this.speechToTextIBMWatson(commandFilePath)
-            break;
+                break;
             default:
                 console.error('No SPEECH_TO_TEXT_METHOD found')
-            break;
+                break;
         }
     }
 }

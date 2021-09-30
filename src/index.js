@@ -1,13 +1,14 @@
 require('dotenv-defaults').config()
 
 const { Client, Intents, VoiceChannel } = require("discord.js")
-const { joinVoiceChannel} = require('@discordjs/voice')
-const client = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES]})
+const { joinVoiceChannel } = require('@discordjs/voice')
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] })
 const Player = require('./player.js')
 const Listener = require('./listener.js')
 const TextToSpeech = require("./tts.js")
 const CommandManager = require('./CommandManager.js')
 const PlayCommand = require('./commandPlugins/PlayCommand')
+const KekeresCommand = require('./commandPlugins/KekeresCommand')
 const QuestionCommand = require('./commandPlugins/QuestionCommand')
 const RedbullCommand = require("./commandPlugins/RedbullCommand")
 const RadioCommand = require('./commandPlugins/RadioCommand')
@@ -18,6 +19,7 @@ let player = null
 let listener = null
 let voiceConnection = null
 let currentChannel = null
+let currentTextChannel = null
 let commandManager = new CommandManager()
 
 // Handle to the music channel
@@ -25,42 +27,43 @@ let musicChannel
 let botChannel
 
 // Add command handlers for command words
-function registerCommands(){
+function registerCommands() {
     commandManager.addPluginHandle('play', new PlayCommand())
-    for(let word of ['who', 'what', 'when', 'where', 'why', 'how', 'do', 'is', 'was', 'will', 'would', 'can', 'could', 'did', 'should', 'whose', 'which', 'whom', 'are']){
-        commandManager.addPluginHandle(word, new QuestionCommand())
-    }
-    commandManager.addPluginHandle('redbull', new RedbullCommand())
-    commandManager.addPluginHandle('radio', new RadioCommand())
+    commandManager.addPluginHandle('kekeres', new KekeresCommand())
+    // for (let word of ['who', 'what', 'when', 'where', 'why', 'how', 'do', 'is', 'was', 'will', 'would', 'can', 'could', 'did', 'should', 'whose', 'which', 'whom', 'are']) {
+    //     commandManager.addPluginHandle(word, new QuestionCommand())
+    // }
+    // commandManager.addPluginHandle('redbull', new RedbullCommand())
+    // commandManager.addPluginHandle('radio', new RadioCommand())
 }
 
 
 // Find the music channel for chat messages
-async function findTextChannels(guild){
+async function findTextChannels(guild) {
     return new Promise((resolve, reject) => {
         guild.channels.fetch()
-        .then(channels => {
-            for(let [key, value] of channels){
-                if(value.name == process.env.MUSIC_CHANNEL_NAME){
-                    musicChannel = value
+            .then(channels => {
+                for (let [key, value] of channels) {
+                    if (value.name == process.env.MUSIC_CHANNEL_NAME) {
+                        musicChannel = value
+                    }
+                    if (value.name == process.env.BOT_CHANNEL_NAME) {
+                        botChannel = value
+                    }
                 }
-                if(value.name == process.env.BOT_CHANNEL_NAME){
-                    botChannel = value
-                }
-            }
-        })
+            })
         resolve()
     })
 }
 
 // Connect to a voice channel
-function connectToChannel(channel, id){
-    if(channel.id == currentChannel?.id){
+function connectToChannel(channel, id, textChannel) {
+    if (channel.id == currentChannel?.id) {
         return
     }
 
     // Leave current channel if in one
-    if(voiceConnection != null){
+    if (voiceConnection != null) {
         leaveChannel()
     }
 
@@ -71,34 +74,32 @@ function connectToChannel(channel, id){
         selfDeaf: false
     });
 
-    player = new Player({voiceConnection: voiceConnection})
-    listener = new Listener({voiceConnection: voiceConnection})
+    player = new Player({ voiceConnection: voiceConnection })
+    listener = new Listener({ voiceConnection: voiceConnection })
     currentChannel = channel
+    currentTextChannel = textChannel
 
     listener.on('wakeWord', (userId) => {
-        console.log(`Wake word for: ${userId}`)
+        console.log(`Wake word for: ${userId}`);
+        currentTextChannel.send('Kekeres?');
+        // currentTextChannel.send('-kekeres');
+        // currentTextChannel.send('KEKERES CRL https://9gag.com/kekerescrl');
 
         // Tell all the commands the wakeword was said
-        if(!commandManager.wakeWordDetected({
+        if (!commandManager.wakeWordDetected({
             musicChannel: musicChannel,
             player: player
-        })){
+        })) {
             // Stop propogation of wakeword
             return
         }
 
         const user = currentChannel.members.get(userId)
-        if(!user){
+        if (!user) {
             console.error(`Can't find user with user ID: ${userId}`)
             return
         }
-        tts.speak(`Yes ${user.displayName}`)
-        .then(ttsStream => {
-            player.playStream(ttsStream)
-            .then(() => {
-                listener.listenForCommand(userId)
-            })
-        })
+        listener.listenForCommand(userId)
     })
 
     listener.on('command', (userId, command) => {
@@ -114,34 +115,34 @@ function connectToChannel(channel, id){
 
 // Leave the voice channel
 // Close the resources
-async function leaveChannel(){
+async function leaveChannel() {
     console.log('Leaving channel')
 
     currentChannel = null
 
-    if(listener != null){
+    if (listener != null) {
         listener.close()
         listener = null
     }
 
-    if(player != null){
+    if (player != null) {
         player.close()
         player = null
     }
 
-    if(voiceConnection != null){
+    if (voiceConnection != null) {
         voiceConnection.destroy()
         voiceConnection = null
     }
 
-    if(commandManager != null){
+    if (commandManager != null) {
         commandManager.close()
     }
 }
 
 // Refresh the users that are being listened to
-function refreshUsers(){
-    if(currentChannel == null){
+function refreshUsers() {
+    if (currentChannel == null) {
         return
     }
 
@@ -149,7 +150,7 @@ function refreshUsers(){
 
     listener.close()
     currentChannel.members.forEach(member => {
-        if(member.user.bot){
+        if (member.user.bot) {
             // Ignore bots
             return
         }
@@ -158,12 +159,14 @@ function refreshUsers(){
 }
 
 // Process a command from a user
-function processCommand(options){
-    if(botChannel){
+function processCommand(options) {
+    if (botChannel) {
         botChannel.send(`Processing Command: ${options.command}`)
     }
 
     console.log(`Processing command: ${options.command}`)
+
+    currentTextChannel.send(`Processing command: ${options.command}`)
 
     commandManager.processCommand({
         ...options,
@@ -179,52 +182,52 @@ client.on('ready', () => {
 
 // Interactions with chat messages
 client.on('messageCreate', async (message) => {
-    if(message.member.user.bot){
+    if (message.member.user.bot) {
         // Igore bots
         return
     }
 
     await findTextChannels(message.guild)
 
-    switch(message.content.toLowerCase()){
-        case ';;join':
-            if(message.member.voice.channel != null){
-                if(this.voiceConnection == null){
-                    connectToChannel(message.member.voice.channel, message.author.id)
+    switch (message.content.toLowerCase()) {
+        case '-join':
+            if (message.member.voice.channel != null) {
+                if (this.voiceConnection == null) {
+                    connectToChannel(message.member.voice.channel, message.author.id, message.channel)
                 }
             }
-        break;
-        case ';;leave':
+            break;
+        case '-exit':
             leaveChannel()
-        break;
-        case ';;test':
-            if(player != null){
+            break;
+        case '-test':
+            if (player != null) {
                 player.stopPlaying()
             }
-        break;
-        case ';;stop':
-            if(player != null){
+            break;
+        case '-stop':
+            if (player != null) {
                 player.stopPlaying()
             }
         default:
-            if(message.content.startsWith(';;')){
+            if (message.content.startsWith('-')) {
                 message.channel.fetch(message.channelId)
-                .then(channel => {
-                    processCommand({
-                        message: message,
-                        command: message.content.substr(2),
-                        userId: message.member.id,
-                        messageChannel: channel,
-                        commandType: 'text'
+                    .then(channel => {
+                        processCommand({
+                            message: message,
+                            command: message.content.substr(2),
+                            userId: message.member.id,
+                            messageChannel: channel,
+                            commandType: 'text'
+                        })
                     })
-                })
             }
-        break;
+            break;
     }
 });
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-    if(currentChannel === null){
+    if (currentChannel === null) {
         // No connected channel
         return
     }
@@ -233,7 +236,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 
     // Leave if everyone leaves
     // == 1 to account for the bot itself
-    if(currentChannel.members.size === 1){
+    if (currentChannel.members.size === 1) {
         leaveChannel()
     }
 })

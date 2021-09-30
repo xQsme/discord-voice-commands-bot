@@ -1,0 +1,12 @@
+version: "3.2"
+services:
+  voice-recognition-bot:
+    container_name: voice-recognition-bot
+    build: .
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./recordings:/usr/src/voice-commands-bot/recordings:rw
+    restart: unless-stopped
