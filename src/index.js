@@ -8,6 +8,8 @@ const Listener = require('./listener.js')
 const CommandManager = require('./CommandManager.js')
 const { resolve } = require('path')
 const COMMANDS = require('../commands.json');
+const messageBuilder = require('./MessageBuilder.js')
+const formatCommands = require('./FormatCommands.js')
 
 const BEEP = resolve('./res/beep.wav')
 
@@ -164,7 +166,6 @@ client.on('messageCreate', async (message) => {
     switch (message.content.toLowerCase()) {
         case '-join':
         case '-summon':
-        case '-voice':
             if (message.member.voice.channel != null) {
                 if (this.voiceConnection == null) {
                     connectToChannel(message.member.voice.channel, message.author.id, message.channel)
@@ -174,6 +175,11 @@ client.on('messageCreate', async (message) => {
         case '-exit':
         case '-leave':
             leaveChannel()
+            break;
+        case '-voice':
+        case '-commands':
+        case '-voicecommands':
+            message.channel.send({ embeds: [messageBuilder('Current Voice Commands', formatCommands())] });
             break;
         default:
             break;
