@@ -1,0 +1,65 @@
+[
+    {
+        "keywords": [
+            "take care",
+            "cares",
+            "keg cares",
+            "kekeres"
+        ],
+        "text": "kekeres",
+        "hasMore": false,
+        "sensitivity": 0.35
+    },
+    {
+        "keywords": [
+            "play"
+        ],
+        "text": "play",
+        "hasMore": true,
+        "sensitivity": 0.5
+    },
+    {
+        "keywords": [
+            "pause",
+            "wait",
+            "hold",
+            "hold on",
+            "hold up"
+        ],
+        "text": "pause",
+        "hasMore": false,
+        "sensitivity": 0.5
+    },
+    {
+        "keywords": [
+            "resume"
+        ],
+        "text": "resume",
+        "hasMore": false,
+        "sensitivity": 0.5
+    },
+    {
+        "keywords": [
+            "skip"
+        ],
+        "text": "skip",
+        "hasMore": false,
+        "sensitivity": 0.5
+    },
+    {
+        "keywords": [
+            "stop"
+        ],
+        "text": "stop",
+        "hasMore": false,
+        "sensitivity": 0.5
+    },
+    {
+        "keywords": [
+            "praise the lord"
+        ],
+        "text": "praise",
+        "hasMore": false,
+        "sensitivity": 0.5
+    }
+]

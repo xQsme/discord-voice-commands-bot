@@ -7,6 +7,7 @@ const Player = require('./player.js')
 const Listener = require('./listener.js')
 const CommandManager = require('./CommandManager.js')
 const { resolve } = require('path')
+const COMMANDS = require('../commands.json');
 
 const BEEP = resolve('./res/beep.wav')
 
@@ -21,63 +22,13 @@ let commandManager = new CommandManager()
 let musicChannel
 let botChannel
 
-// Commands
-const kekeresCommand = {
-    text: 'kekeres',
-    hasMore: false,
-    sensitivity: 0.35,
-}
-
-const playCommand = {
-    text: 'play',
-    hasMore: true,
-    sensitivity: 0.5,
-}
-
-const pauseCommand = {
-    text: 'pause',
-    hasMore: false,
-    sensitivity: 0.5,
-}
-
-const resumeCommand = {
-    text: 'resume',
-    hasMore: false,
-    sensitivity: 0.5,
-}
-
-const skipCommand = {
-    text: 'skip',
-    hasMore: false,
-    sensitivity: 0.5,
-}
-
-const stopCommand = {
-    text: 'stop',
-    hasMore: false,
-    sensitivity: 0.5,
-}
-
-const praiseCommand = {
-    text: 'praise',
-    hasMore: false,
-    sensitivity: 0.5,
-}
-
 // Add command handlers for command words
 function registerCommands() {
-    commandManager.addPluginHandle('take care', kekeresCommand);
-    commandManager.addPluginHandle('cares', kekeresCommand);
-    commandManager.addPluginHandle('keg cares', kekeresCommand);
-    commandManager.addPluginHandle('kekeres', kekeresCommand);
-
-    commandManager.addPluginHandle('play', playCommand);
-    commandManager.addPluginHandle('skip', skipCommand);
-    commandManager.addPluginHandle('wait', pauseCommand);
-    commandManager.addPluginHandle('resume', resumeCommand);
-    commandManager.addPluginHandle('stop', stopCommand);
-
-    commandManager.addPluginHandle('praise the lord', praiseCommand);
+    COMMANDS.forEach(command => (
+        command.keywords.forEach(keyword => {
+            commandManager.addPluginHandle(keyword, command);
+        })
+    ));
 }
 
 // Find the music channel for chat messages
