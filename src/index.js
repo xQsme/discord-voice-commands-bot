@@ -1,21 +1,11 @@
 require('dotenv-defaults').config()
 
-const { Client, Intents, VoiceChannel } = require("discord.js")
+const { Client, Intents } = require("discord.js")
 const { joinVoiceChannel } = require('@discordjs/voice')
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] })
-const Player = require('./player.js')
 const Listener = require('./listener.js')
-const TextToSpeech = require("./tts.js")
 const CommandManager = require('./CommandManager.js')
-const PlayCommand = require('./commandPlugins/PlayCommand')
-const KekeresCommand = require('./commandPlugins/KekeresCommand')
-const QuestionCommand = require('./commandPlugins/QuestionCommand')
-const RedbullCommand = require("./commandPlugins/RedbullCommand")
-const RadioCommand = require('./commandPlugins/RadioCommand')
 
-const tts = require('./tts')
-
-let player = null
 let listener = null
 let voiceConnection = null
 let currentChannel = null
@@ -26,17 +16,40 @@ let commandManager = new CommandManager()
 let musicChannel
 let botChannel
 
-// Add command handlers for command words
-function registerCommands() {
-    commandManager.addPluginHandle('play', new PlayCommand())
-    commandManager.addPluginHandle('kekeres', new KekeresCommand())
-    // for (let word of ['who', 'what', 'when', 'where', 'why', 'how', 'do', 'is', 'was', 'will', 'would', 'can', 'could', 'did', 'should', 'whose', 'which', 'whom', 'are']) {
-    //     commandManager.addPluginHandle(word, new QuestionCommand())
-    // }
-    // commandManager.addPluginHandle('redbull', new RedbullCommand())
-    // commandManager.addPluginHandle('radio', new RadioCommand())
+// Commands
+const kekeresCommand = {
+    text: 'kekeres',
+    hasMore: false,
 }
 
+const playCommand = {
+    text: 'play',
+    hasMore: true,
+}
+
+const praiseCommand = {
+    text: 'praise',
+    hasMore: false,
+}
+
+// Add command handlers for command words
+function registerCommands() {
+    commandManager.addPluginHandle('cares', kekeresCommand);
+    commandManager.addPluginHandle('keres', kekeresCommand);
+    commandManager.addPluginHandle('queres', kekeresCommand);
+    commandManager.addPluginHandle('kekeres', kekeresCommand);
+    commandManager.addPluginHandle('queque queres', kekeresCommand);
+    commandManager.addPluginHandle('que queres', kekeresCommand);
+    commandManager.addPluginHandle('kekeres caralho', kekeresCommand);
+    commandManager.addPluginHandle('queque queres caralho', kekeresCommand);
+    commandManager.addPluginHandle('que queres caralho', kekeresCommand);
+
+    commandManager.addPluginHandle('play', playCommand);
+    commandManager.addPluginHandle('blay', playCommand);
+    commandManager.addPluginHandle('clay', playCommand);
+
+    commandManager.addPluginHandle('praise the lord', praiseCommand);
+}
 
 // Find the music channel for chat messages
 async function findTextChannels(guild) {
@@ -74,30 +87,14 @@ function connectToChannel(channel, id, textChannel) {
         selfDeaf: false
     });
 
-    player = new Player({ voiceConnection: voiceConnection })
     listener = new Listener({ voiceConnection: voiceConnection })
     currentChannel = channel
     currentTextChannel = textChannel
 
     listener.on('wakeWord', (userId) => {
         console.log(`Wake word for: ${userId}`);
-        currentTextChannel.send('Kekeres?');
-        // currentTextChannel.send('-kekeres');
-        // currentTextChannel.send('KEKERES CRL https://9gag.com/kekerescrl');
-
-        // Tell all the commands the wakeword was said
-        if (!commandManager.wakeWordDetected({
-            musicChannel: musicChannel,
-            player: player
-        })) {
-            // Stop propogation of wakeword
-            return
-        }
-
-        const user = currentChannel.members.get(userId)
-        if (!user) {
-            console.error(`Can't find user with user ID: ${userId}`)
-            return
+        if (process.env.DEV) {
+            currentTextChannel.send('Kekeres?');
         }
         listener.listenForCommand(userId)
     })
@@ -106,7 +103,8 @@ function connectToChannel(channel, id, textChannel) {
         processCommand({
             command,
             userId,
-            commandType: 'voice'
+            commandType: 'voice',
+            currentTextChannel,
         })
     })
 
@@ -123,11 +121,6 @@ async function leaveChannel() {
     if (listener != null) {
         listener.close()
         listener = null
-    }
-
-    if (player != null) {
-        player.close()
-        player = null
     }
 
     if (voiceConnection != null) {
@@ -160,19 +153,16 @@ function refreshUsers() {
 
 // Process a command from a user
 function processCommand(options) {
-    if (botChannel) {
-        botChannel.send(`Processing Command: ${options.command}`)
-    }
-
     console.log(`Processing command: ${options.command}`)
 
-    currentTextChannel.send(`Processing command: ${options.command}`)
+    if (process.env.DEV) {
+        currentTextChannel.send(`Processing command: ${options.command}`)
+    }
 
     commandManager.processCommand({
         ...options,
         musicChannel: musicChannel,
         botChannel: botChannel,
-        player: player
     })
 }
 
@@ -183,7 +173,7 @@ client.on('ready', () => {
 // Interactions with chat messages
 client.on('messageCreate', async (message) => {
     if (message.member.user.bot) {
-        // Igore bots
+        // Ignore bots
         return
     }
 
@@ -200,28 +190,7 @@ client.on('messageCreate', async (message) => {
         case '-exit':
             leaveChannel()
             break;
-        case '-test':
-            if (player != null) {
-                player.stopPlaying()
-            }
-            break;
-        case '-stop':
-            if (player != null) {
-                player.stopPlaying()
-            }
         default:
-            if (message.content.startsWith('-')) {
-                message.channel.fetch(message.channelId)
-                    .then(channel => {
-                        processCommand({
-                            message: message,
-                            command: message.content.substr(2),
-                            userId: message.member.id,
-                            messageChannel: channel,
-                            commandType: 'text'
-                        })
-                    })
-            }
             break;
     }
 });

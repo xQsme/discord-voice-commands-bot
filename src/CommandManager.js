@@ -1,7 +1,4 @@
-const ICommand = require('./commandPlugins/ICommand')
-const path = require('path')
-
-// const tts = require('./tts')
+const ss = require("string-similarity");
 
 class CommandManager {
     pluginMap = new Map()
@@ -10,54 +7,50 @@ class CommandManager {
 
     }
 
-    addPluginHandle(commandWord, plugin) {
-        if (!plugin.prototype instanceof ICommand) {
-            throw new Error('Command plugin must extend ICommand')
+    getClosestCommand(command, word) {
+        const keys = Array.from(this.pluginMap.keys());
+        const commandMatch = ss.findBestMatch(command, keys);
+        const wordMatch = ss.findBestMatch(word, keys);
+        const isWord = wordMatch.bestMatch.rating > commandMatch.bestMatch.rating;
+        const { bestMatch } = isWord ? wordMatch : commandMatch;
+        return {
+            key: bestMatch.target,
+            command: this.pluginMap.get(bestMatch.target),
+            accuracy: bestMatch.rating,
+            isWord,
         }
+    }
 
+    addPluginHandle(commandWord, commandObj) {
         if (this.pluginMap.has(commandWord)) {
             throw new Error(`Command ${commandWord} is already registered`)
         }
-
-        this.pluginMap.set(commandWord, plugin)
-    }
-
-    // Let all the plugins know a wakeword was detected
-    wakeWordDetected(options) {
-        let returnValue = true
-        for (let [key, value] of this.pluginMap) {
-            if (!value.wakeWordDetected(options)) {
-                returnValue = false
-            }
-        }
-
-        return returnValue
+        this.pluginMap.set(commandWord, commandObj)
     }
 
     processCommand(options) {
-        const command = options.command.toLowerCase()
-        const commandArray = command.split(' ')
-        const commandWord = commandArray.splice(0, 1)[0]
-        const commandText = commandArray.join(' ')
+        const { currentTextChannel } = options;
+        const command = options.command.toLowerCase();
+        const commandArray = command.split(' ');
+        const commandWord = commandArray.splice(0, 1)[0];
+        const commandText = commandArray.join(' ');
+        const closestCommand = this.getClosestCommand(command, commandWord);
 
-        if (!this.pluginMap.has(commandWord)) {
-            if (options.player) {
-                // tts.speak('Command not recognized')
-                // .then(audioStream => {
-                //     options.player.playStream(audioStream)
-                // })
-            } else {
-                options.messageChannel.send('Command not recognized')
-            }
+        if (process.env.DEV) {
+            currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
+        }
 
-            return false
+        if (closestCommand.accuracy < parseFloat(process.env.COMMAND_MATCH_SENSITIVITY)) {
+            currentTextChannel.send('Voice command does not resemble any of the defined commands.')
+            return;
         }
 
         // Execute the command
-        return this.pluginMap.get(commandWord).command({
-            ...options,
-            commandText
-        })
+        if (closestCommand.isWord && closestCommand.command.hasMore && commandText) {
+            currentTextChannel.send(`-${closestCommand.command.text} ${commandText}`)
+        } else {
+            currentTextChannel.send(`-${closestCommand.command.text}`)
+        }
     }
 
     close(options) {
