@@ -12,13 +12,14 @@ const messageBuilder = require('./MessageBuilder.js')
 const formatCommands = require('./FormatCommands.js')
 
 const BEEP = resolve('./res/beep.wav')
+const VERBOSE = JSON.parse(process.env.VERBOSE);
 
 let player = null
 let listener = null
 let voiceConnection = null
 let currentChannel = null
 let currentTextChannel = null
-let commandManager = new CommandManager()
+let commandManager = new CommandManager(VERBOSE)
 
 // Add command handlers for command words
 function registerCommands() {
@@ -56,7 +57,7 @@ function connectToChannel(channel, id, textChannel) {
         listener.listenForCommand(userId)
         player.playFile(BEEP);
         console.log(`Wake word for: ${userId}`);
-        if (!!process.env.DEV) {
+        if (VERBOSE) {
             currentTextChannel.send(`Kekeres? <@${userId}>`);
         }
     })
@@ -117,7 +118,7 @@ function refreshUsers() {
 function processCommand(options) {
     console.log(`Processing command: ${options.command}`)
 
-    if (!!process.env.DEV) {
+    if (VERBOSE) {
         currentTextChannel.send(`Processing command: ${options.command}`)
     }
 

@@ -2,9 +2,10 @@ const ss = require("string-similarity");
 
 class CommandManager {
     pluginMap = new Map()
+    VERBOSE = false;
 
-    constructor() {
-
+    constructor(verbose) {
+        this.VERBOSE = verbose;
     }
 
     getClosestCommand(command, word) {
@@ -36,7 +37,7 @@ class CommandManager {
         const commandText = commandArray.join(' ');
         const closestCommand = this.getClosestCommand(command, commandWord);
 
-        if (!!process.env.DEV) {
+        if (VERBOSE) {
             currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
         }
 
