@@ -3,7 +3,7 @@ const {
     EndBehaviorType,
 } = require('@discordjs/voice')
 const fs = require('fs')
-const { Writable, Transform } = require('stream')
+const { Transform } = require('stream')
 const prism = require('prism-media')
 const { FileWriter } = require('wav')
 const { OpusEncoder } = require('@discordjs/opus')
@@ -17,12 +17,14 @@ const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1-generated')
 
 const { resolve } = require('path')
 
-const {
-    BUMBLEBEE
-} = require('@picovoice/porcupine-node/builtin_keywords')
+// const {
+//     BUMBLEBEE
+// } = require('@picovoice/porcupine-node/builtin_keywords')
 
-// const KEKERES = resolve('./words/kekeres.ppn')
+const KEKERES = resolve('./words/kekeres.ppn')
 // const HEYHEYHEY = resolve('./words/heyheyhey.ppn')
+
+// const KEKERES = resolve('./words/kekeres_es.ppn')
 // const PROCUPINE = resolve('./words/porcupine_es.pv')
 // const RHINO = resolve('./words/rhino_es.pv')
 
