@@ -20,10 +20,6 @@ let currentChannel = null
 let currentTextChannel = null
 let commandManager = new CommandManager()
 
-// Handle to the music channel
-let musicChannel
-let botChannel
-
 // Add command handlers for command words
 function registerCommands() {
     COMMANDS.forEach(command => (
@@ -31,24 +27,6 @@ function registerCommands() {
             commandManager.addPluginHandle(keyword, command);
         })
     ));
-}
-
-// Find the music channel for chat messages
-async function findTextChannels(guild) {
-    return new Promise((resolve, reject) => {
-        guild.channels.fetch()
-            .then(channels => {
-                for (let [key, value] of channels) {
-                    if (value.name == process.env.MUSIC_CHANNEL_NAME) {
-                        musicChannel = value
-                    }
-                    if (value.name == process.env.BOT_CHANNEL_NAME) {
-                        botChannel = value
-                    }
-                }
-            })
-        resolve()
-    })
 }
 
 // Connect to a voice channel
@@ -75,12 +53,12 @@ function connectToChannel(channel, id, textChannel) {
     currentTextChannel = textChannel
 
     listener.on('wakeWord', (userId) => {
+        listener.listenForCommand(userId)
         player.playFile(BEEP);
         console.log(`Wake word for: ${userId}`);
         if (process.env.DEV) {
-            currentTextChannel.send('Kekeres?');
+            currentTextChannel.send(`Kekeres? <@${userId}>`);
         }
-        listener.listenForCommand(userId)
     })
 
     listener.on('command', (userId, command) => {
@@ -143,11 +121,7 @@ function processCommand(options) {
         currentTextChannel.send(`Processing command: ${options.command}`)
     }
 
-    commandManager.processCommand({
-        ...options,
-        musicChannel: musicChannel,
-        botChannel: botChannel,
-    })
+    commandManager.processCommand(options)
 }
 
 client.on('ready', () => {
@@ -160,8 +134,6 @@ client.on('messageCreate', async (message) => {
         // Ignore bots
         return
     }
-
-    await findTextChannels(message.guild)
 
     switch (message.content.toLowerCase()) {
         case '-join':
@@ -179,7 +151,7 @@ client.on('messageCreate', async (message) => {
         case '-voice':
         case '-commands':
         case '-voicecommands':
-            message.channel.send({ embeds: [messageBuilder('Current Voice Commands', formatCommands())] });
+            message.channel.send({ embeds: [messageBuilder('Current Wake Word: Kekeres', formatCommands())] });
             break;
         default:
             break;

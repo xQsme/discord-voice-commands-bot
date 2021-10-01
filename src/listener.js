@@ -17,11 +17,11 @@ const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1-generated')
 
 const { resolve } = require('path')
 
-const {
-    BUMBLEBEE
-} = require('@picovoice/porcupine-node/builtin_keywords')
+// const {
+//     BUMBLEBEE
+// } = require('@picovoice/porcupine-node/builtin_keywords')
 
-// const KEKERES = resolve('./words/kekeres.ppn')
+const KEKERES = resolve('./words/kekeres.ppn')
 // const HEYHEYHEY = resolve('./words/heyheyhey.ppn')
 
 // const KEKERES = resolve('./words/kekeres_es.ppn')
@@ -107,7 +107,7 @@ class Listener extends EventEmitter {
 
         this.userFrameAccumulators[userId] = []
 
-        const handle = new Porcupine([BUMBLEBEE], [parseFloat(process.env.WAKE_WORD_SENSITIVITY)])//, PROCUPINE, RHINO)
+        const handle = new Porcupine([KEKERES], [parseFloat(process.env.WAKE_WORD_SENSITIVITY)])//, PROCUPINE, RHINO)
         const audioReceiveStream = this.voiceConnection.receiver.subscribe(userId)
             .pipe(new prism.opus.Decoder({
                 rate: handle.sampleRate,
