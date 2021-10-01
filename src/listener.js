@@ -17,11 +17,11 @@ const SpeechToTextV1 = require('ibm-watson/speech-to-text/v1-generated')
 
 const { resolve } = require('path')
 
-// const {
-//     BUMBLEBEE
-// } = require('@picovoice/porcupine-node/builtin_keywords')
+const {
+    BUMBLEBEE
+} = require('@picovoice/porcupine-node/builtin_keywords')
 
-const KEKERES = resolve('./words/kekeres.ppn')
+// const KEKERES = resolve('./words/kekeres.ppn')
 // const HEYHEYHEY = resolve('./words/heyheyhey.ppn')
 
 // const KEKERES = resolve('./words/kekeres_es.ppn')

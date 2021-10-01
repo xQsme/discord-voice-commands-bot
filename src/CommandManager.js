@@ -40,7 +40,7 @@ class CommandManager {
             currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
         }
 
-        if (closestCommand.accuracy < parseFloat(process.env.COMMAND_MATCH_SENSITIVITY)) {
+        if (closestCommand.accuracy < closestCommand.command.sensitivity) {
             currentTextChannel.send('Voice command does not resemble any of the defined commands.')
             return;
         }

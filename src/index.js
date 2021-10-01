@@ -3,9 +3,14 @@ require('dotenv-defaults').config()
 const { Client, Intents } = require("discord.js")
 const { joinVoiceChannel } = require('@discordjs/voice')
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] })
+const Player = require('./player.js')
 const Listener = require('./listener.js')
 const CommandManager = require('./CommandManager.js')
+const { resolve } = require('path')
 
+const BEEP = resolve('./res/beep.wav')
+
+let player = null
 let listener = null
 let voiceConnection = null
 let currentChannel = null
@@ -20,33 +25,57 @@ let botChannel
 const kekeresCommand = {
     text: 'kekeres',
     hasMore: false,
+    sensitivity: 0.35,
 }
 
 const playCommand = {
     text: 'play',
     hasMore: true,
+    sensitivity: 0.5,
+}
+
+const pauseCommand = {
+    text: 'pause',
+    hasMore: false,
+    sensitivity: 0.5,
+}
+
+const resumeCommand = {
+    text: 'resume',
+    hasMore: false,
+    sensitivity: 0.5,
+}
+
+const skipCommand = {
+    text: 'skip',
+    hasMore: false,
+    sensitivity: 0.5,
+}
+
+const stopCommand = {
+    text: 'stop',
+    hasMore: false,
+    sensitivity: 0.5,
 }
 
 const praiseCommand = {
     text: 'praise',
     hasMore: false,
+    sensitivity: 0.5,
 }
 
 // Add command handlers for command words
 function registerCommands() {
+    commandManager.addPluginHandle('take care', kekeresCommand);
     commandManager.addPluginHandle('cares', kekeresCommand);
-    commandManager.addPluginHandle('keres', kekeresCommand);
-    commandManager.addPluginHandle('queres', kekeresCommand);
+    commandManager.addPluginHandle('keg cares', kekeresCommand);
     commandManager.addPluginHandle('kekeres', kekeresCommand);
-    commandManager.addPluginHandle('queque queres', kekeresCommand);
-    commandManager.addPluginHandle('que queres', kekeresCommand);
-    commandManager.addPluginHandle('kekeres caralho', kekeresCommand);
-    commandManager.addPluginHandle('queque queres caralho', kekeresCommand);
-    commandManager.addPluginHandle('que queres caralho', kekeresCommand);
 
     commandManager.addPluginHandle('play', playCommand);
-    commandManager.addPluginHandle('blay', playCommand);
-    commandManager.addPluginHandle('clay', playCommand);
+    commandManager.addPluginHandle('skip', skipCommand);
+    commandManager.addPluginHandle('wait', pauseCommand);
+    commandManager.addPluginHandle('resume', resumeCommand);
+    commandManager.addPluginHandle('stop', stopCommand);
 
     commandManager.addPluginHandle('praise the lord', praiseCommand);
 }
@@ -87,11 +116,13 @@ function connectToChannel(channel, id, textChannel) {
         selfDeaf: false
     });
 
+    player = new Player({ voiceConnection: voiceConnection })
     listener = new Listener({ voiceConnection: voiceConnection })
     currentChannel = channel
     currentTextChannel = textChannel
 
     listener.on('wakeWord', (userId) => {
+        player.playFile(BEEP);
         console.log(`Wake word for: ${userId}`);
         if (process.env.DEV) {
             currentTextChannel.send('Kekeres?');
