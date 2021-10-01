@@ -56,7 +56,7 @@ function connectToChannel(channel, id, textChannel) {
         listener.listenForCommand(userId)
         player.playFile(BEEP);
         console.log(`Wake word for: ${userId}`);
-        if (process.env.DEV) {
+        if (!!process.env.DEV) {
             currentTextChannel.send(`Kekeres? <@${userId}>`);
         }
     })
@@ -117,7 +117,7 @@ function refreshUsers() {
 function processCommand(options) {
     console.log(`Processing command: ${options.command}`)
 
-    if (process.env.DEV) {
+    if (!!process.env.DEV) {
         currentTextChannel.send(`Processing command: ${options.command}`)
     }
 

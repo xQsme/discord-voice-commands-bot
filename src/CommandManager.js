@@ -36,7 +36,7 @@ class CommandManager {
         const commandText = commandArray.join(' ');
         const closestCommand = this.getClosestCommand(command, commandWord);
 
-        if (process.env.DEV) {
+        if (!!process.env.DEV) {
             currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
         }
 
