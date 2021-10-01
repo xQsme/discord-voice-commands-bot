@@ -2,6 +2,7 @@ version: "3.2"
 services:
   voice-recognition-bot:
     container_name: voice-recognition-bot
+    image: voice-recognition-bot:latest
     build: .
     logging:
       options:

@@ -1,4 +1,7 @@
 const ss = require("string-similarity");
+const { resolve } = require('path')
+const RIGHT = resolve('./res/right.wav')
+const WRONG = resolve('./res/wrong.mp3')
 
 class CommandManager {
     pluginMap = new Map()
@@ -30,23 +33,37 @@ class CommandManager {
     }
 
     processCommand(options) {
-        const { currentTextChannel } = options;
+        const { currentTextChannel, player } = options;
         const command = options.command.toLowerCase();
         const commandArray = command.split(' ');
         const commandWord = commandArray.splice(0, 1)[0];
         const commandText = commandArray.join(' ');
-        const closestCommand = this.getClosestCommand(command, commandWord);
+        let closestCommand = this.getClosestCommand(command, commandWord);
 
         if (this.VERBOSE) {
             currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
         }
 
         if (closestCommand.accuracy < closestCommand.command.sensitivity) {
-            currentTextChannel.send('Voice command does not resemble any of the defined commands.')
-            return;
+            console.log(command.length)
+            if(command.length <= 2 && this.pluginMap.has('kekeres')) {
+                closestCommand = {
+                    key: 'kekeres',
+                    command: this.pluginMap.get('kekeres'),
+                    accuracy: 1,
+                    isWord: true,
+                }
+            } else {
+                player.playFile(WRONG);
+                if(this.VERBOSE) {
+                    currentTextChannel.send('Voice command does not resemble any of the defined commands.');
+                }
+                return;
+            }
         }
 
         // Execute the command
+        player.playFile(RIGHT);
         if (closestCommand.isWord && closestCommand.command.hasMore && commandText) {
             currentTextChannel.send(`-${closestCommand.command.text} ${commandText}`)
         } else {

@@ -68,6 +68,7 @@ function connectToChannel(channel, id, textChannel) {
             userId,
             commandType: 'voice',
             currentTextChannel,
+            player,
         })
     })
 
