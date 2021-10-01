@@ -4,8 +4,8 @@ class CommandManager {
     pluginMap = new Map()
     VERBOSE = false;
 
-    constructor(verbose) {
-        this.VERBOSE = verbose;
+    constructor(VERBOSE) {
+        this.VERBOSE = VERBOSE;
     }
 
     getClosestCommand(command, word) {
@@ -37,7 +37,7 @@ class CommandManager {
         const commandText = commandArray.join(' ');
         const closestCommand = this.getClosestCommand(command, commandWord);
 
-        if (VERBOSE) {
+        if (this.VERBOSE) {
             currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
         }
 
