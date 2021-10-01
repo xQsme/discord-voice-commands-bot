@@ -181,6 +181,8 @@ client.on('messageCreate', async (message) => {
 
     switch (message.content.toLowerCase()) {
         case '-join':
+        case '-summon':
+        case '-voice':
             if (message.member.voice.channel != null) {
                 if (this.voiceConnection == null) {
                     connectToChannel(message.member.voice.channel, message.author.id, message.channel)
@@ -188,6 +190,7 @@ client.on('messageCreate', async (message) => {
             }
             break;
         case '-exit':
+        case '-leave':
             leaveChannel()
             break;
         default:
