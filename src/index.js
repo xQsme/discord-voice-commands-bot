@@ -153,7 +153,7 @@ client.on('messageCreate', async (message) => {
         case '-voice':
         case '-commands':
         case '-voicecommands':
-            message.channel.send({ embeds: [messageBuilder('Current Wake Word: Kekeres', formatCommands())] });
+            message.channel.send({ embeds: [messageBuilder('Current Wake Word: **Kekeres**', formatCommands())] });
             break;
         default:
             break;
