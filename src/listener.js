@@ -65,7 +65,7 @@ class Listener extends EventEmitter {
         const commandAudioStream = this.voiceConnection.receiver.subscribe(userId, {
             end: {
                 behavior: EndBehaviorType.AfterSilence,
-                duration: 2000
+                duration: 250
             }
         })
             .pipe(new OpusDecodingStream({}, encoder))

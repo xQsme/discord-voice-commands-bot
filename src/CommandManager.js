@@ -3,12 +3,12 @@ const { resolve } = require('path')
 const RIGHT = resolve('./res/right.wav')
 const WRONG = resolve('./res/wrong.mp3')
 
+const VERBOSE = JSON.parse(process.env.VERBOSE);
+
 class CommandManager {
     pluginMap = new Map()
-    VERBOSE = false;
 
-    constructor(VERBOSE) {
-        this.VERBOSE = VERBOSE;
+    constructor() {
     }
 
     getClosestCommand(command, word) {
@@ -40,7 +40,7 @@ class CommandManager {
         const commandText = commandArray.join(' ');
         let closestCommand = this.getClosestCommand(command, commandWord);
 
-        if (this.VERBOSE) {
+        if (VERBOSE) {
             currentTextChannel.send(`Best match: ${closestCommand.key} (${closestCommand.isWord ? 'word' : 'sentence'} ${(closestCommand.accuracy * 100).toFixed(2)}%)`)
         }
 
@@ -55,7 +55,7 @@ class CommandManager {
                 }
             } else {
                 player.playFile(WRONG);
-                if(this.VERBOSE) {
+                if (VERBOSE) {
                     currentTextChannel.send('Voice command does not resemble any of the defined commands.');
                 }
                 return;

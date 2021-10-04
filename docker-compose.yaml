@@ -1,9 +1,9 @@
 version: "3.2"
 services:
-  voice-recognition-bot:
-    container_name: voice-recognition-bot
-    image: voice-recognition-bot:latest
+  voice-bot:
     build: .
+    image: voice-recognition-bot:latest
+    container_name: voice-bot
     logging:
       options:
         max-size: "10m"
